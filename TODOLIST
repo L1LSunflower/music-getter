@@ -1,0 +1,8 @@
+- [ ] Make cool cli application.
+- [ ] Make 'workWithDirectory.go' easier and faster.
+- [ ] Rework function 'filteringMusic'.
+- [ ] Rework function 'copyFile'.
+- [ ] Rework all ot of functions, make it work faster.
+- [ ] Add concurrency(goroutines).
+- [ ] Add in use patterns.
+- [ ] Add unit tests.
