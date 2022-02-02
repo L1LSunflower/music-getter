@@ -1,4 +1,4 @@
-- [ ] Make cool cli application.
+- [ ] Make cool cli tool for copy music.
 - [ ] Make 'workWithDirectory.go' easier and faster.
 - [ ] Rework function 'filteringMusic'.
 - [ ] Rework function 'copyFile'.
@@ -6,3 +6,4 @@
 - [ ] Add concurrency(goroutines).
 - [ ] Add in use patterns.
 - [ ] Add unit tests.
+- [ ] Edit music files metadata.
