@@ -15,6 +15,9 @@ var artistMap = map[string]bool{}
 // listOfArtist this variable need to collect original artist.
 var listOfArtist = []string{}
 
+// particalList thist variable need to divide single artist from collabs.
+var particalList = []string{",", "feat.", "ft.", "x", "X", "×", "_", "vs", ".", "feat"}
+
 /*
 	GrabAllFiles this function is main function to copy music files(*.mp3).
 */
@@ -26,11 +29,10 @@ func GrabAllFiles(sourcepath, folderpath string) {
 	}
 	artistSlice := []string{}
 	for _, file := range allFiles {
-		artist := strings.Split(file.Name(), " - ")
-		artistSlice = append(artistSlice, artist[0])
+		artistSlice = append(artistSlice, strings.Split(file.Name(), " - ")[0])
 	}
-	filteredArtists := filterArtist(artistSlice)
-	createDirForArtist(folderpath, filteredArtists)
+	listOfArtist = filterArtist(artistSlice)
+	createDirForArtist(folderpath, listOfArtist)
 	for _, value := range allFiles {
 		fileInfo, err := value.Info()
 		if err != nil {
@@ -59,10 +61,11 @@ func checkDir(folderpath string) {
 */
 func filterArtist(artistList []string) []string {
 	for _, artist := range artistList {
-		artist = strings.ToLower(artist)
-		singleArtist, state := filteringMusic(artist)
-		if state != false {
+		singleArtist, state := filteringMusic(strings.ToLower(artist))
+		if state {
 			checkAndAddArtist(singleArtist)
+		} else {
+			log.Panicf("This artist alread was: %t", state)
 		}
 	}
 	return listOfArtist
@@ -73,36 +76,17 @@ func filterArtist(artistList []string) []string {
 */
 func filteringMusic(artist string) (string, bool) {
 	letters := strings.Split(artist, " ")
-	for index, letter := range letters {
-		switch letter {
-		case ",":
-			singleArtist := strings.Join(letters[:index], " ")
-			return singleArtist, true
-		case "feat.":
-			singleArtist := strings.Join(letters[:index], " ")
-			return singleArtist, true
-		case "ft.":
-			singleArtist := strings.Join(letters[:index], " ")
-			return singleArtist, true
-		case "x":
-			singleArtist := strings.Join(letters[:index], " ")
-			return singleArtist, true
-		case "×":
-			singleArtist := strings.Join(letters[:index], " ")
-			return singleArtist, true
-		case "X":
-			singleArtist := strings.Join(letters[:index], " ")
-			return singleArtist, true
-		case "_":
-			singleArtist := strings.Join(letters[:index], " ")
-			return singleArtist, true
-		default:
-			singleArtist := strings.Join(letters[:index+1], " ")
-			if singleArtist[len(singleArtist)-1] == ',' {
-				singleArtist = singleArtist[:len(singleArtist)-1]
-				return singleArtist, true
-			} else if singleArtist == artist {
-				return singleArtist, true
+	for index, letter := range strings.Split(artist, " ") {
+		for _, partWord := range particalList {
+			if letter == partWord {
+				return strings.Join(letters[:index], " "), true
+			} else {
+				singleArtist := strings.Join(letters[:index+1], " ")
+				if singleArtist[len(singleArtist)-1] == ',' {
+					return singleArtist[:len(singleArtist)-1], true
+				} else if singleArtist == artist {
+					return singleArtist, true
+				}
 			}
 		}
 	}
@@ -138,7 +122,7 @@ func createDirForArtist(folder string, artistList []string) {
 		if _, err := os.Stat(folder + artist); os.IsNotExist(err) {
 			err = os.Mkdir(folder+artist, 0777)
 			if err != nil {
-				log.Fatal(err)
+				log.Println(err)
 			}
 		}
 	}
@@ -151,8 +135,8 @@ func copyFile(sourceFolder, dst string, file fs.FileInfo) error {
 	log.Printf("Copying file: %s", file.Name())
 	singleArtist, state := filteringMusic(strings.Split(file.Name(), " - ")[0])
 	singleArtist = strings.ToLower(singleArtist)
-	if state != false {
-		fmt.Errorf("\nSomething went wrong!!!\n")
+	if !state {
+		return fmt.Errorf("something went wrong")
 
 	}
 	source, err := os.Open(sourceFolder + file.Name())
@@ -163,7 +147,7 @@ func copyFile(sourceFolder, dst string, file fs.FileInfo) error {
 	defer source.Close()
 
 	if _, err := os.Stat(dst); err == nil {
-		return fmt.Errorf("File %s already exists.", dst)
+		return fmt.Errorf("file %s already exists", dst)
 	}
 	destination, err := os.Create(dst)
 	if err != nil {
